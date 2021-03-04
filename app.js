@@ -4,8 +4,10 @@ require('dotenv').config();
 const bodyParser = require('body-parser');
 const ejs = require('ejs');
 const express = require('express');
-const md5 = require('md5');
 const mongoose = require('mongoose');
+
+const bcrypt = require('bcrypt');
+const saltRounds = 15;
 
 const app = express();
 ////////////////////////////////////////////////////////////////////////////////
@@ -61,17 +63,24 @@ app.route('/login')
 
   .post(function(req, res) {
     const username = req.body.username;
-    const password = md5(req.body.password);
+    const password = req.body.password;
 
     User.findOne({ email: username }, function(err, user) {
       if (!err) {
-        if (user.password === password) {
-          res.render('secrets');
+        if (user) {
+          // Load hash from your password DB.
+          bcrypt.compare(password, user.password, function(err, result) {
+            if (result) {
+              res.render('secrets');
+            } else {
+              res.send("Email or password does not match.");
+            }
+          });
         } else {
-          res.send("Password does not match... " + err);
+          res.send("Email or password does not match.");
         }
       } else {
-        res.send("Email does not exist... " + err);
+        res.send(err);
       }
     });
   });
@@ -85,17 +94,19 @@ app.route('/register')
   })
 
   .post(function(req, res) {
-    const user = new User({
-      email: req.body.username,
-      password: md5(req.body.password)
-    });
+    bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+      const user = new User({
+        email: req.body.username,
+        password: hash
+      });
 
-    user.save(function(err) {
-      if (!err) {
-        res.render('secrets');
-      } else {
-        res.send(err);
-      }
+      user.save(function(err) {
+        if (!err) {
+          res.render('secrets');
+        } else {
+          res.send(err);
+        }
+      });
     });
   });
 ////////////////////////////////////////////////////////////////////////////////
