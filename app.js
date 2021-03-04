@@ -1,4 +1,6 @@
 //////////////////////////////////  PACKAGES  //////////////////////////////////
+require('dotenv').config();
+
 const bodyParser = require('body-parser');
 const ejs = require('ejs');
 const express = require('express');
@@ -20,9 +22,8 @@ const db = 'userDB';
 
 // Local
 const url = 'mongodb://localhost:27017/' + db;
+
 // Atlas
-// const usr = "admin-jay";
-// const pwd = "Test123";
 // const url = "mongodb+srv://" + usr + ":" + pwd + "@cluster0.lphdq.mongodb.net/" + db;
 
 // Establish connection
@@ -41,8 +42,7 @@ const userSchema = new mongoose.Schema({
 });
 
 // Encrypt
-const secret = "Thisisourlittlesecret.";
-userSchema.plugin(encrypt, { secret: secret, encryptedFields: ['password'] });
+userSchema.plugin(encrypt, { secret: process.env.SECRET, encryptedFields: ['password'] });
 
 // Create model
 const User = mongoose.model('user', userSchema);
