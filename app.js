@@ -4,8 +4,8 @@ require('dotenv').config();
 const bodyParser = require('body-parser');
 const ejs = require('ejs');
 const express = require('express');
+const md5 = require('md5');
 const mongoose = require('mongoose');
-const encrypt = require('mongoose-encryption');
 
 const app = express();
 ////////////////////////////////////////////////////////////////////////////////
@@ -41,9 +41,6 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// Encrypt
-userSchema.plugin(encrypt, { secret: process.env.SECRET, encryptedFields: ['password'] });
-
 // Create model
 const User = mongoose.model('user', userSchema);
 ////////////////////////////////////////////////////////////////////////////////
@@ -64,7 +61,7 @@ app.route('/login')
 
   .post(function(req, res) {
     const username = req.body.username;
-    const password = req.body.password;
+    const password = md5(req.body.password);
 
     User.findOne({ email: username }, function(err, user) {
       if (!err) {
@@ -90,7 +87,7 @@ app.route('/register')
   .post(function(req, res) {
     const user = new User({
       email: req.body.username,
-      password: req.body.password
+      password: md5(req.body.password)
     });
 
     user.save(function(err) {
@@ -112,4 +109,4 @@ app.route('/register')
 ////////////////////////////////////////////////////////////////////////////////
 
 
-app.listen(3000, () => console.log("Server successfully started..."));
+app.listen(process.env.PORT || 3000, () => console.log("Server successfully started..."));
