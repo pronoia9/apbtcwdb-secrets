@@ -111,6 +111,34 @@ app.get('/', function(req, res) {
 ////////////////////////////////////////////////////////////////////////////////
 
 
+//////////////////////////////////  REGISTER  //////////////////////////////////
+app.route('/register')
+  .get(function(req, res) {
+    // check if theres an active session / if user logged in previously
+    if (req.isAuthenticated()) {
+      // if so, redirect to secrets
+      res.redirect('/secrets');
+    } else {
+      // else render the login page
+      res.render('register');
+    }
+  })
+
+  .post(function(req, res) {
+    User.register({ username: req.body.username }, req.body.password, function(err, user) {
+      if (!err) {
+        passport.authenticate('local')(req, res, function() {
+          res.redirect('/secrets');
+        });
+      } else {
+        console.log(err);
+        res.redirect('/register');
+      }
+    });
+  });
+////////////////////////////////////////////////////////////////////////////////
+
+
 ////////////////////////////////////  LOGIN  ///////////////////////////////////
 app.route('/login')
   .get(function(req, res) {
@@ -144,42 +172,6 @@ app.route('/login')
 ////////////////////////////////////////////////////////////////////////////////
 
 
-///////////////////////////////////  LOGOUT  ///////////////////////////////////
-app.get('/logout', function(req, res) {
-  req.logout();
-  res.redirect('/');
-});
-////////////////////////////////////////////////////////////////////////////////
-
-
-//////////////////////////////////  REGISTER  //////////////////////////////////
-app.route('/register')
-  .get(function(req, res) {
-    // check if theres an active session / if user logged in previously
-    if (req.isAuthenticated()) {
-      // if so, redirect to secrets
-      res.redirect('/secrets');
-    } else {
-      // else render the login page
-      res.render('register');
-    }
-  })
-
-  .post(function(req, res) {
-    User.register({ username: req.body.username }, req.body.password, function(err, user) {
-      if (!err) {
-        passport.authenticate('local')(req, res, function() {
-          res.redirect('/secrets');
-        });
-      } else {
-        console.log(err);
-        res.redirect('/register');
-      }
-    });
-  });
-////////////////////////////////////////////////////////////////////////////////
-
-
 ///////////////////////////////////  GOOGLE  ///////////////////////////////////
 app.get('/auth/google',
   passport.authenticate('google', { scope: ['profile'] }));
@@ -206,11 +198,22 @@ app.get('/auth/facebook/secrets',
 ////////////////////////////////////////////////////////////////////////////////
 
 
+///////////////////////////////////  LOGOUT  ///////////////////////////////////
+app.get('/logout', function(req, res) {
+  req.logout();
+  res.redirect('/');
+});
+////////////////////////////////////////////////////////////////////////////////
+
+
 ///////////////////////////////////  SECRETS  //////////////////////////////////
 app.get('/secrets', function(req, res) {
+  // check if theres an active session / if user logged in previously
   if (req.isAuthenticated()) {
+    // if so render secrets
     res.render('secrets');
   } else {
+    // else redirect to login page
     res.redirect('/login');
   }
 });
@@ -220,25 +223,34 @@ app.get('/secrets', function(req, res) {
 ///////////////////////////////////  SUBMIT  ///////////////////////////////////
 app.route('/submit')
 .get(function(req, res) {
+  // check if theres an active session / if user logged in previously
   if (req.isAuthenticated()) {
     res.render('submit');
   } else {
-    res.redirect('login');
+    res.redirect('/login');
   }
 })
 
 .post(function(req, res) {
   const newSecret = req.body.secret;
-
-  console.log('---------------------------------------------------------------');
-  console.log(req);
-  console.log('---------------------------------------------------------------');
-  console.log(req.user);
-  console.log('---------------------------------------------------------------');
-
-  res.redirect('secret');
+  res.redirect('/secrets');
 });
 ////////////////////////////////////////////////////////////////////////////////
 
 
 app.listen(process.env.PORT || 3000, () => console.log("Server successfully started..."));
+
+
+// console.log('--------------------------- req body --------------------------');
+// console.log(req.body);
+// console.log('---------------------- req session store ----------------------');
+// console.log(req.sessionStore);
+// console.log('------------------------ req session id -----------------------');
+// console.log(req.sessionID);
+// console.log('------------------------- req session  ------------------------');
+// console.log(req.session);
+// console.log('------------------------- req passport ------------------------');
+// console.log(req._passport);
+// console.log('--------------------------- req user --------------------------');
+// console.log(req.user);
+// console.log('---------------------------------------------------------------');
