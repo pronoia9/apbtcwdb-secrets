@@ -82,7 +82,7 @@ passport.use(new GoogleStrategy({
     console.log("--------------------------- GOOGLE ---------------------------");
     console.log(profile);
     console.log("-------------------------------------------------------------");
-    User.findOrCreate({ googleId: profile.id, username: profile.id }, function (err, user) {
+    User.findOrCreate({ googleId: profile.id, username: profile.displayName }, function (err, user) {
       return cb(err, user);
     });
   }
@@ -98,7 +98,7 @@ passport.use(new FacebookStrategy({
     console.log("-------------------------- FACEBOOK --------------------------");
     console.log(profile);
     console.log("-------------------------------------------------------------");
-    User.findOrCreate({ facebookId: profile.id, username: profile.id }, function (err, user) {
+    User.findOrCreate({ facebookId: profile.id, username: profile.displayName }, function (err, user) {
       return cb(err, user);
     });
   }
