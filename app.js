@@ -108,15 +108,7 @@ passport.use(new FacebookStrategy({
 
 ////////////////////////////////////  HOME  ////////////////////////////////////
 app.get('/', function(req, res) {
-  // // check if theres an active session / if user logged in previously
-  // if (req.isAuthenticated()) {
-  //   // if so, redirect to secrets
-  //   res.redirect('/secrets');
-  // } else {
-  //   // else render the home page
-  //   res.render('home');
-  // }
-  res.render('home');
+  res.render('home', { show: req.isAuthenticated() });
 });
 ////////////////////////////////////////////////////////////////////////////////
 
