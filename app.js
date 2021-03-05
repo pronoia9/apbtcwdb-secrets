@@ -79,9 +79,6 @@ passport.use(new GoogleStrategy({
     callbackURL: "http://localhost:3000/auth/google/secrets"
   },
   function(accessToken, refreshToken, profile, cb) {
-    console.log("--------------------------- GOOGLE ---------------------------");
-    console.log(profile);
-    console.log("-------------------------------------------------------------");
     User.findOrCreate({ googleId: profile.id, username: profile.displayName }, function (err, user) {
       return cb(err, user);
     });
@@ -95,9 +92,6 @@ passport.use(new FacebookStrategy({
     callbackURL: "http://localhost:3000/auth/facebook/secrets"
   },
   function(accessToken, refreshToken, profile, cb) {
-    console.log("-------------------------- FACEBOOK --------------------------");
-    console.log(profile);
-    console.log("-------------------------------------------------------------");
     User.findOrCreate({ facebookId: profile.id, username: profile.displayName }, function (err, user) {
       return cb(err, user);
     });
@@ -108,7 +102,11 @@ passport.use(new FacebookStrategy({
 
 ////////////////////////////////////  HOME  ////////////////////////////////////
 app.get('/', function(req, res) {
-  res.render('home', { show: req.isAuthenticated() });
+  if (req.isAuthenticated()) {
+    res.render('home', { show: req.isAuthenticated(), user: req.user.username });
+  } else {
+    res.render('home', { show: req.isAuthenticated(), user: "" });
+  }
 });
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -220,6 +218,26 @@ app.get('/secrets', function(req, res) {
 
 
 ///////////////////////////////////  SUBMIT  ///////////////////////////////////
+app.route('/submit')
+.get(function(req, res) {
+  if (req.isAuthenticated()) {
+    res.render('submit');
+  } else {
+    res.redirect('login');
+  }
+})
+
+.post(function(req, res) {
+  const newSecret = req.body.secret;
+
+  console.log('---------------------------------------------------------------');
+  console.log(req);
+  console.log('---------------------------------------------------------------');
+  console.log(req.user);
+  console.log('---------------------------------------------------------------');
+
+  res.redirect('secret');
+});
 ////////////////////////////////////////////////////////////////////////////////
 
 
