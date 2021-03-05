@@ -212,7 +212,9 @@ app.get('/secrets', function(req, res) {
   // check if theres an active session / if user logged in previously
   if (req.isAuthenticated()) {
     User.find({ "secret": { $ne: null } }, function(err, users) {
+      // if there are users with secrets
       if (!err) {
+        // if the current user has a secret, send it 
         if (req.user.secret && req.user.secret !== "") {
           res.render('secrets', { secret: req.user.secret, users: users });
         } else {
