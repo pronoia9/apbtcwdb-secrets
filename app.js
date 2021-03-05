@@ -11,6 +11,7 @@ const passport = require('passport');
 const passportLocalMongoose = require('passport-local-mongoose');
 const session = require('express-session');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const FacebookStrategy = require('passport-facebook').Strategy;
 
 const app = express();
 ////////////////////////////////////////////////////////////////////////////////
@@ -45,7 +46,8 @@ mongoose.set("useCreateIndex", true);
 const userSchema = new mongoose.Schema({
   username: String,
   password: String,
-  googleId: String
+  googleId: String,
+  facebookId: String
 });
 
 // Plugins
@@ -77,8 +79,26 @@ passport.use(new GoogleStrategy({
     callbackURL: "http://localhost:3000/auth/google/secrets"
   },
   function(accessToken, refreshToken, profile, cb) {
-    console.log(cb);
-    User.findOrCreate({ googleId: profile.id }, function (err, user) {
+    console.log("--------------------------- GOOGLE ---------------------------");
+    console.log(profile);
+    console.log("-------------------------------------------------------------");
+    User.findOrCreate({ googleId: profile.id, username: profile.id }, function (err, user) {
+      return cb(err, user);
+    });
+  }
+));
+
+// FACEBOOK
+passport.use(new FacebookStrategy({
+    clientID: process.env.FACEBOOK_APP_ID,
+    clientSecret: process.env.FACEBOOK_APP_SECRET,
+    callbackURL: "http://localhost:3000/auth/facebook/secrets"
+  },
+  function(accessToken, refreshToken, profile, cb) {
+    console.log("-------------------------- FACEBOOK --------------------------");
+    console.log(profile);
+    console.log("-------------------------------------------------------------");
+    User.findOrCreate({ facebookId: profile.id, username: profile.id }, function (err, user) {
       return cb(err, user);
     });
   }
@@ -89,9 +109,13 @@ passport.use(new GoogleStrategy({
 ////////////////////////////////////  HOME  ////////////////////////////////////
 app.get('/', function(req, res) {
   // check if theres an active session / if user logged in previously
-  // if so, redirect to secrets
-  // else render the home page
-  res.render('home');
+  if (req.isAuthenticated()) {
+    // if so, redirect to secrets
+    res.redirect('/secrets');
+  } else {
+    // else render the home page
+    res.render('home');
+  }
 });
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -161,7 +185,20 @@ app.get('/auth/google',
 app.get('/auth/google/secrets',
   passport.authenticate('google', { failureRedirect: '/login' }),
   function(req, res) {
-    // Successful authentication, redirect home.
+    // Successful authentication, redirect
+    res.redirect('/secrets');
+  });
+////////////////////////////////////////////////////////////////////////////////
+
+
+//////////////////////////////////  FACEBOOK  //////////////////////////////////
+app.get('/auth/facebook',
+  passport.authenticate('facebook'));
+
+app.get('/auth/facebook/secrets',
+  passport.authenticate('facebook', { failureRedirect: '/login' }),
+  function(req, res) {
+    // Successful authentication, redirect
     res.redirect('/secrets');
   });
 ////////////////////////////////////////////////////////////////////////////////

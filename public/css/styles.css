@@ -14,3 +14,9 @@ body {
   color: #fff;
   background-color: #000;
 }
+
+.btn-nolink .btn-nolink:hover, .btn-nolink:visited, .btn-nolink:link, .btn-nolink:active
+{
+  color: #fff;
+  text-decoration: none;
+}
