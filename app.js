@@ -209,15 +209,19 @@ app.get('/logout', function(req, res) {
 
 ///////////////////////////////////  SECRETS  //////////////////////////////////
 app.get('/secrets', function(req, res) {
-  console.log(req.user);
   // check if theres an active session / if user logged in previously
   if (req.isAuthenticated()) {
-    // if so render secrets
-    if (req.user.secret && req.user.secret > 0) {
-      res.render('secrets', { secret: req.user.secret });
-    } else {
-      res.render('secrets', { secret: "" });
-    }
+    User.find({ "secret": { $ne: null } }, function(err, users) {
+      if (!err) {
+        if (req.user.secret && req.user.secret !== "") {
+          res.render('secrets', { secret: req.user.secret, users: users });
+        } else {
+          res.render('secrets', { secret: "", users: users });
+        }
+      } else {
+        console.log(err);
+      }
+    });
   } else {
     // else redirect to login page
     res.redirect('/login');
