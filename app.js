@@ -1,11 +1,16 @@
 //////////////////////////////////  PACKAGES  //////////////////////////////////
+require('dotenv').config();
+
 const bodyParser = require('body-parser');
 const ejs = require('ejs');
 const express = require('express');
 const mongoose = require('mongoose');
+const findOrCreate = require('mongoose-findorcreate');
+
 const passport = require('passport');
 const passportLocalMongoose = require('passport-local-mongoose');
 const session = require('express-session');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 const app = express();
 ////////////////////////////////////////////////////////////////////////////////
@@ -17,7 +22,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 app.use(session({
-  secret: 'Our little test secret.',
+  secret: process.env.SECRET,
   resave: false,
   saveUninitialized: true
 }));
@@ -26,13 +31,11 @@ app.use(passport.session());
 
 
 ///////////////////////////////////  MONGODB  //////////////////////////////////
-const db = 'userDB';
-
 // Local
-const url = 'mongodb://localhost:27017/' + db;
+const url = 'mongodb://localhost:27017/' + process.env.DB;
 
 // Atlas
-// const url = "mongodb+srv://" + usr + ":" + pwd + "@cluster0.lphdq.mongodb.net/" + db;
+// const url = "mongodb+srv://" + process.env.DB_USER + ":" + process.env.DB_PASSWORD + "@cluster0.lphdq.mongodb.net/" + process.env.DATABASE;
 
 // Establish connection
 mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -41,23 +44,53 @@ mongoose.set("useCreateIndex", true);
 // Create schema
 const userSchema = new mongoose.Schema({
   username: String,
-  password: String
+  password: String,
+  googleId: String
 });
 
+// Plugins
 userSchema.plugin(passportLocalMongoose);
+userSchema.plugin(findOrCreate);
 
 // Create model
-const User = mongoose.model('user', userSchema);
+const User = mongoose.model('User', userSchema);
+////////////////////////////////////////////////////////////////////////////////
 
+
+///////////////////////////////  AUTHENTICATION  ///////////////////////////////
 passport.use(User.createStrategy());
 
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
+passport.serializeUser(function(user, done) {
+  done(null, user.id);
+});
+
+passport.deserializeUser(function(id, done) {
+  User.findById(id, function(err, user) {
+    done(err, user);
+  });
+});
+
+// GOOGLE
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: "http://localhost:3000/auth/google/secrets"
+  },
+  function(accessToken, refreshToken, profile, cb) {
+    console.log(cb);
+    User.findOrCreate({ googleId: profile.id }, function (err, user) {
+      return cb(err, user);
+    });
+  }
+));
 ////////////////////////////////////////////////////////////////////////////////
 
 
 ////////////////////////////////////  HOME  ////////////////////////////////////
 app.get('/', function(req, res) {
+  // check if theres an active session / if user logged in previously
+  // if so, redirect to secrets
+  // else render the home page
   res.render('home');
 });
 ////////////////////////////////////////////////////////////////////////////////
@@ -66,6 +99,9 @@ app.get('/', function(req, res) {
 ////////////////////////////////////  LOGIN  ///////////////////////////////////
 app.route('/login')
   .get(function(req, res) {
+    // check if theres an active session / if user logged in previously
+    // if so, redirect to secrets
+    // else render the login page
     res.render('login');
   })
 
@@ -114,6 +150,19 @@ app.route('/register')
         res.redirect('/register');
       }
     });
+  });
+////////////////////////////////////////////////////////////////////////////////
+
+
+///////////////////////////////////  GOOGLE  ///////////////////////////////////
+app.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile'] }));
+
+app.get('/auth/google/secrets',
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  function(req, res) {
+    // Successful authentication, redirect home.
+    res.redirect('/secrets');
   });
 ////////////////////////////////////////////////////////////////////////////////
 
