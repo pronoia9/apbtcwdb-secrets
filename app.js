@@ -108,14 +108,15 @@ passport.use(new FacebookStrategy({
 
 ////////////////////////////////////  HOME  ////////////////////////////////////
 app.get('/', function(req, res) {
-  // check if theres an active session / if user logged in previously
-  if (req.isAuthenticated()) {
-    // if so, redirect to secrets
-    res.redirect('/secrets');
-  } else {
-    // else render the home page
-    res.render('home');
-  }
+  // // check if theres an active session / if user logged in previously
+  // if (req.isAuthenticated()) {
+  //   // if so, redirect to secrets
+  //   res.redirect('/secrets');
+  // } else {
+  //   // else render the home page
+  //   res.render('home');
+  // }
+  res.render('home');
 });
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -124,9 +125,13 @@ app.get('/', function(req, res) {
 app.route('/login')
   .get(function(req, res) {
     // check if theres an active session / if user logged in previously
-    // if so, redirect to secrets
-    // else render the login page
-    res.render('login');
+    if (req.isAuthenticated()) {
+      // if so, redirect to secrets
+      res.redirect('/secrets');
+    } else {
+      // else render the login page
+      res.render('login');
+    }
   })
 
   .post(function(req, res) {
@@ -160,7 +165,14 @@ app.get('/logout', function(req, res) {
 //////////////////////////////////  REGISTER  //////////////////////////////////
 app.route('/register')
   .get(function(req, res) {
-    res.render('register');
+    // check if theres an active session / if user logged in previously
+    if (req.isAuthenticated()) {
+      // if so, redirect to secrets
+      res.redirect('/secrets');
+    } else {
+      // else render the login page
+      res.render('register');
+    }
   })
 
   .post(function(req, res) {
