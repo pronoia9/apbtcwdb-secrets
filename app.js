@@ -46,6 +46,7 @@ mongoose.set("useCreateIndex", true);
 const userSchema = new mongoose.Schema({
   username: String,
   password: String,
+  secret: String,
   googleId: String,
   facebookId: String
 });
@@ -208,10 +209,15 @@ app.get('/logout', function(req, res) {
 
 ///////////////////////////////////  SECRETS  //////////////////////////////////
 app.get('/secrets', function(req, res) {
+  console.log(req.user);
   // check if theres an active session / if user logged in previously
   if (req.isAuthenticated()) {
     // if so render secrets
-    res.render('secrets');
+    if (req.user.secret && req.user.secret > 0) {
+      res.render('secrets', { secret: req.user.secret });
+    } else {
+      res.render('secrets', { secret: "" });
+    }
   } else {
     // else redirect to login page
     res.redirect('/login');
@@ -232,7 +238,8 @@ app.route('/submit')
 })
 
 .post(function(req, res) {
-  const newSecret = req.body.secret;
+  User.findByIdAndUpdate(req.user.id, { $set: { secret: req.body.secret } }, (err) => console.log(err));
+
   res.redirect('/secrets');
 });
 ////////////////////////////////////////////////////////////////////////////////
